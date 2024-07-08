@@ -1,4 +1,4 @@
-#EXTM3U url-tvg="https://iptvx.one/EPG"
+#EXTM3U url-tvg="https://epg.one/ru2.xml.gz  "
 #EXTINF:0,Беларусь 1
 #EXTGRP:БЕЛАРУСЬ ТВ
 http://178.124.183.5:80/hls/M52YG9EVYD_HLS/variant.m3u8
