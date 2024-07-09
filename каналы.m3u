@@ -1,3 +1,4 @@
+#EXTM3U x-tvg-url="wink" catchup="append" catchup-days="7" catchup-source="?start=${start}&end=${end}"
 #EXTM3U url-tvg="https://epg.one/ru2.xml.gz  "
 #EXTINF:0,Беларусь 1
 #EXTGRP:БЕЛАРУСЬ ТВ
