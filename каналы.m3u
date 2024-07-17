@@ -31,7 +31,7 @@ https://strm.yandex.ru/kal/utv/utv0.m3u8
 #EXTINF:-1 group-title="Познавательные", ТНТ International (Европа)
 https://strm.yandex.ru/kal/tnt_interneshnl_belarus/tnt_interneshnl_belarus0.m3u8
 #EXTINF:-1 tvg-id="tnt4" tvg-logo="https://epgx.site/p/tnt4.png" group-title="Федеральные",ТНТ4
-http://91.205.199.3:80/tnt4/index.m3u8
+http://195.191.208.15/hlsjwt/b45a7014974d9d1b292960e548cc55af9c80d808-41-0-24h6601185-5-1542349559-1721239245--pxTzwoIgIamO2rDIrEmaD-Xg4LeOMgoNyBEf2jnQloI/index.m3u8
 #EXTINF:-1 group-title="Познавательные", Перец
 http://178.124.179.122:8088/Peretz/index.m3u8
 #EXTINF:-1 group-title="Познавательные", Gagsnetwork
