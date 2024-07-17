@@ -28,8 +28,8 @@ http://strm.yandex.ru/kal/tv3_belarus/tv3_belarus0.m3u8
 http://31.131.136.4:8001/play/e001
 #EXTINF:-1 group-title="Развлекательные", Ю 
 https://strm.yandex.ru/kal/utv/utv0.m3u8
-#EXTINF:-1 group-title="Познавательные", ТНТ International (Европа)
-https://strm.yandex.ru/kal/tnt_interneshnl_belarus/tnt_interneshnl_belarus0.m3u8
+#EXTINF:-1 group-title="Познавательные", ТНТ
+http://195.191.208.225/hlsjwt/b45a7014974d9d1b292960e548cc55af9c80d808-6-0-24h6601185-5-1542349559-1721239890--ZX3Gc_XWcEfMBRo_zvC6k4fUD4JvaNQZ0eOVHoP3CRk/index.m3u8
 #EXTINF:-1 tvg-id="tnt4" tvg-logo="https://epgx.site/p/tnt4.png" group-title="Федеральные",ТНТ4
 http://195.191.208.15/hlsjwt/b45a7014974d9d1b292960e548cc55af9c80d808-41-0-24h6601185-5-1542349559-1721239245--pxTzwoIgIamO2rDIrEmaD-Xg4LeOMgoNyBEf2jnQloI/index.m3u8
 #EXTINF:-1 group-title="Познавательные", Перец
