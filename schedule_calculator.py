@@ -89,28 +89,9 @@ class ScheduleCalculator:
     
     def calculate_schedule_for_stop(self, tab, new_stop_id, transport_cache):
         """Рассчитывает расписание для новой остановки на основе загруженного"""
-        # Проверяем, есть ли оригинальное расписание
+        # Используем только оригинальное расписание, игнорируем предыдущие расчеты
         if not tab.original_schedule["weekdays"] or not tab.original_schedule["weekends"]:
-            # Если нет оригинального, пробуем использовать текущее
-            current_schedule = {
-                "weekdays": {},
-                "weekends": {}
-            }
-            
-            for i in range(20):
-                hour = 5 + i if i < 19 else 0
-                wd = tab.weekdays[i].get()
-                we = tab.weekends[i].get()
-                
-                if wd:
-                    current_schedule["weekdays"][hour] = wd
-                if we:
-                    current_schedule["weekends"][hour] = we
-            
-            if not current_schedule["weekdays"] or not current_schedule["weekends"]:
-                return False
-            
-            tab.original_schedule = current_schedule
+            return False
         
         transport_number = tab.number_var.get()
         transport_type = tab.transport_type if tab.transport_type else tab.app.transport_type.get()
@@ -157,14 +138,14 @@ class ScheduleCalculator:
             interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
             time_diff += interval * step
         
-        # Рассчитываем новое расписание
+        # Рассчитываем новое расписание ТОЛЬКО на основе оригинального
         new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff, self.weekday_error_coeffs)
         new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff, self.weekend_error_coeffs)
         
         # Обновляем поля в интерфейсе
         self.update_schedule_in_ui(tab, new_weekdays, new_weekends)
         
-        # Сохраняем рассчитанное расписание
+        # Сохраняем рассчитанное расписание (но не перезаписываем оригинальное!)
         tab.calculated_schedule = {
             "weekdays": new_weekdays.copy(),
             "weekends": new_weekends.copy()
