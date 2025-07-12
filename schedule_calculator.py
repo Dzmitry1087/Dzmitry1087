@@ -1,5 +1,7 @@
 import json
 from collections import defaultdict
+import requests
+import tkinter as tk
 
 class ScheduleCalculator:
     def __init__(self):
@@ -77,12 +79,38 @@ class ScheduleCalculator:
             hour -= 1
             new_minute += 60
         
+        # Корректируем час, если вышли за границы суток
+        if hour >= 24:
+            hour -= 24
+        elif hour < 0:
+            hour += 24
+        
         return hour, new_minute
     
     def calculate_schedule_for_stop(self, tab, new_stop_id, transport_cache):
         """Рассчитывает расписание для новой остановки на основе загруженного"""
+        # Проверяем, есть ли оригинальное расписание
         if not tab.original_schedule["weekdays"] or not tab.original_schedule["weekends"]:
-            return False
+            # Если нет оригинального, пробуем использовать текущее
+            current_schedule = {
+                "weekdays": {},
+                "weekends": {}
+            }
+            
+            for i in range(20):
+                hour = 5 + i if i < 19 else 0
+                wd = tab.weekdays[i].get()
+                we = tab.weekends[i].get()
+                
+                if wd:
+                    current_schedule["weekdays"][hour] = wd
+                if we:
+                    current_schedule["weekends"][hour] = we
+            
+            if not current_schedule["weekdays"] or not current_schedule["weekends"]:
+                return False
+            
+            tab.original_schedule = current_schedule
         
         transport_number = tab.number_var.get()
         transport_type = tab.transport_type if tab.transport_type else tab.app.transport_type.get()
@@ -103,7 +131,11 @@ class ScheduleCalculator:
             if str(stop.get("id")) == new_stop_id:
                 new_stop = stop
         
-        if not current_stop or not new_stop or current_stop.get("direction") != new_stop.get("direction"):
+        if not current_stop or not new_stop:
+            return False
+        
+        # Проверяем, что остановки в одном направлении
+        if current_stop.get("direction") != new_stop.get("direction"):
             return False
         
         direction = current_stop.get("direction")
@@ -118,99 +150,19 @@ class ScheduleCalculator:
         
         # Рассчитываем время перемещения между остановками
         time_diff = 0
-        if new_index > current_index:
-            # Движение вперед по маршруту
-            for i in range(current_index, new_index):
-                stop_id = stops_in_direction[i].get("id")
-                interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
-                time_diff += interval
-        else:
-            # Движение назад по маршруту
-            for i in range(new_index, current_index):
-                stop_id = stops_in_direction[i].get("id")
-                interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
-                time_diff += interval
+        step = 1 if new_index > current_index else -1
         
-        # Рассчитываем новое расписание (не изменяя исходное)
-        new_weekdays = {}
-        new_weekends = {}
+        for i in range(current_index, new_index, step):
+            stop_id = stops_in_direction[i].get("id")
+            interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
+            time_diff += interval * step
         
-        def calculate_new_times(hour, minutes_str, time_diff, error_coeffs):
-            new_minutes_dict = defaultdict(list)
-            for minute in minutes_str.split():
-                try:
-                    m = int(minute)
-                    # Получаем коэффициент погрешности для текущего часа
-                    coeff = error_coeffs.get(hour, 0.01)
-                    adjusted_time_diff = int(time_diff * (1 + coeff))
-                    new_hour, new_min = self.calculate_time_with_carryover(hour, m, adjusted_time_diff)
-                    new_minutes_dict[new_hour].append(f"{new_min:02d}")
-                except ValueError:
-                    continue
-            
-            # Сортируем минуты по возрастанию и объединяем в строку
-            result = {}
-            for h in sorted(new_minutes_dict.keys()):
-                sorted_minutes = sorted(new_minutes_dict[h], key=lambda x: int(x))
-                result[h] = ' '.join(sorted_minutes)
-            
-            return result
-        
-        # Обрабатываем будние дни
-        temp_weekdays = {}
-        for hour, minutes in tab.original_schedule["weekdays"].items():
-            calculated = calculate_new_times(hour, minutes, time_diff, self.weekday_error_coeffs)
-            for h, m in calculated.items():
-                if h in temp_weekdays:
-                    temp_weekdays[h] += ' ' + m
-                else:
-                    temp_weekdays[h] = m
-        
-        # Объединяем и сортируем минуты для каждого часа
-        for hour in sorted(temp_weekdays.keys()):
-            minutes_list = sorted(list(set(temp_weekdays[hour].split())), key=lambda x: int(x))
-            new_weekdays[hour] = ' '.join(minutes_list)
-        
-        # Обрабатываем выходные дни
-        temp_weekends = {}
-        for hour, minutes in tab.original_schedule["weekends"].items():
-            calculated = calculate_new_times(hour, minutes, time_diff, self.weekend_error_coeffs)
-            for h, m in calculated.items():
-                if h in temp_weekends:
-                    temp_weekends[h] += ' ' + m
-                else:
-                    temp_weekends[h] = m
-        
-        # Объединяем и сортируем минуты для каждого часа
-        for hour in sorted(temp_weekends.keys()):
-            minutes_list = sorted(list(set(temp_weekends[hour].split())), key=lambda x: int(x))
-            new_weekends[hour] = ' '.join(minutes_list)
+        # Рассчитываем новое расписание
+        new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff, self.weekday_error_coeffs)
+        new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff, self.weekend_error_coeffs)
         
         # Обновляем поля в интерфейсе
-        for hour in range(5, 24):
-            if hour in new_weekdays:
-                tab.weekdays[hour-5].delete(0, tk.END)
-                tab.weekdays[hour-5].insert(0, new_weekdays[hour])
-            else:
-                tab.weekdays[hour-5].delete(0, tk.END)
-            
-            if hour in new_weekends:
-                tab.weekends[hour-5].delete(0, tk.END)
-                tab.weekends[hour-5].insert(0, new_weekends[hour])
-            else:
-                tab.weekends[hour-5].delete(0, tk.END)
-        
-        if 0 in new_weekdays:
-            tab.weekdays[19].delete(0, tk.END)
-            tab.weekdays[19].insert(0, new_weekdays[0])
-        else:
-            tab.weekdays[19].delete(0, tk.END)
-        
-        if 0 in new_weekends:
-            tab.weekends[19].delete(0, tk.END)
-            tab.weekends[19].insert(0, new_weekends[0])
-        else:
-            tab.weekends[19].delete(0, tk.END)
+        self.update_schedule_in_ui(tab, new_weekdays, new_weekends)
         
         # Сохраняем рассчитанное расписание
         tab.calculated_schedule = {
@@ -219,6 +171,61 @@ class ScheduleCalculator:
         }
         
         return True
+    
+    def calculate_new_schedule(self, schedule, time_diff, error_coeffs):
+        """Рассчитывает новое расписание на основе временной разницы"""
+        new_schedule = defaultdict(list)
+        
+        for hour, minutes_str in schedule.items():
+            if not minutes_str:
+                continue
+                
+            for minute in minutes_str.split():
+                try:
+                    m = int(minute)
+                    # Получаем коэффициент погрешности для текущего часа
+                    coeff = error_coeffs.get(hour, 0.01)
+                    adjusted_time_diff = int(time_diff * (1 + coeff))
+                    new_hour, new_min = self.calculate_time_with_carryover(hour, m, adjusted_time_diff)
+                    new_schedule[new_hour].append(f"{new_min:02d}")
+                except ValueError:
+                    continue
+        
+        # Сортируем минуты по возрастанию и объединяем в строку
+        result = {}
+        for h in sorted(new_schedule.keys()):
+            sorted_minutes = sorted(new_schedule[h], key=lambda x: int(x))
+            result[h] = ' '.join(sorted_minutes)
+        
+        return result
+    
+    def update_schedule_in_ui(self, tab, weekdays, weekends):
+        """Обновляет расписание в пользовательском интерфейсе"""
+        for hour in range(5, 24):
+            idx = hour - 5
+            if hour in weekdays:
+                tab.weekdays[idx].delete(0, tk.END)
+                tab.weekdays[idx].insert(0, weekdays[hour])
+            else:
+                tab.weekdays[idx].delete(0, tk.END)
+            
+            if hour in weekends:
+                tab.weekends[idx].delete(0, tk.END)
+                tab.weekends[idx].insert(0, weekends[hour])
+            else:
+                tab.weekends[idx].delete(0, tk.END)
+        
+        if 0 in weekdays:
+            tab.weekdays[19].delete(0, tk.END)
+            tab.weekdays[19].insert(0, weekdays[0])
+        else:
+            tab.weekdays[19].delete(0, tk.END)
+        
+        if 0 in weekends:
+            tab.weekends[19].delete(0, tk.END)
+            tab.weekends[19].insert(0, weekends[0])
+        else:
+            tab.weekends[19].delete(0, tk.END)
     
     def get_interval_for_stop(self, transport_type, transport_number, stop_id, transport_cache):
         """Получает интервал между остановками из базы данных"""
