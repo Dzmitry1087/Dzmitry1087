@@ -154,36 +154,31 @@ class ScheduleCalculator:
         return True
     
     def calculate_new_schedule(self, schedule, time_diff, error_coeffs):
-    """Рассчитывает новое расписание с учетом отрицательных коэффициентов"""
-    new_schedule = defaultdict(list)
-    
-    for hour, minutes_str in schedule.items():
-        if not minutes_str:
-            continue
-            
-        for minute in minutes_str.split():
-            try:
-                m = int(minute)
-                coeff = error_coeffs.get(hour, 0.0)
-                
-                # Применяем коэффициент (может быть отрицательным)
-                adjusted_time_diff = int(time_diff * (1 + coeff))
-                
-                # Гарантируем, что разница не станет нулевой или отрицательной
-                adjusted_time_diff = max(1, adjusted_time_diff) if time_diff > 0 else min(-1, adjusted_time_diff)
-                
-                new_hour, new_min = self.calculate_time_with_carryover(hour, m, adjusted_time_diff)
-                new_schedule[new_hour].append(f"{new_min:02d}")
-            except ValueError:
+        """Рассчитывает новое расписание на основе временной разницы"""
+        new_schedule = defaultdict(list)
+        
+        for hour, minutes_str in schedule.items():
+            if not minutes_str:
                 continue
-    
-    # Сортируем минуты по возрастанию и объединяем в строку
-    result = {}
-    for h in sorted(new_schedule.keys()):
-        sorted_minutes = sorted(new_schedule[h], key=lambda x: int(x))
-        result[h] = ' '.join(sorted_minutes)
-    
-    return result
+                
+            for minute in minutes_str.split():
+                try:
+                    m = int(minute)
+                    # Получаем коэффициент погрешности для текущего часа
+                    coeff = error_coeffs.get(hour, 0.01)
+                    adjusted_time_diff = int(time_diff * (1 + coeff))
+                    new_hour, new_min = self.calculate_time_with_carryover(hour, m, adjusted_time_diff)
+                    new_schedule[new_hour].append(f"{new_min:02d}")
+                except ValueError:
+                    continue
+        
+        # Сортируем минуты по возрастанию и объединяем в строку
+        result = {}
+        for h in sorted(new_schedule.keys()):
+            sorted_minutes = sorted(new_schedule[h], key=lambda x: int(x))
+            result[h] = ' '.join(sorted_minutes)
+        
+        return result
     
     def update_schedule_in_ui(self, tab, weekdays, weekends):
         """Обновляет расписание в пользовательском интерфейсе"""
