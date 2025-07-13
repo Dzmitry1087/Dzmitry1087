@@ -27517,7 +27517,7 @@
     "stop_id": "56735",
     "stop_name": "Основателей",
     "direction": "B",
-    "interval_to_next": 1
+    "interval_to_next": 2
   },
   "bus_86_56612": {
     "transport_type": "bus",
@@ -27533,7 +27533,7 @@
     "stop_id": "56714",
     "stop_name": "Сиреневая",
     "direction": "B",
-    "interval_to_next": 3
+    "interval_to_next": 1
   },
   "bus_86_56670": {
     "transport_type": "bus",
@@ -27541,7 +27541,7 @@
     "stop_id": "56670",
     "stop_name": "Железнодорожная станция ''Озерище''",
     "direction": "B",
-    "interval_to_next": 2
+    "interval_to_next": 3
   },
   "bus_86_2208909": {
     "transport_type": "bus",
@@ -27549,7 +27549,7 @@
     "stop_id": "2208909",
     "stop_name": "Стариновская",
     "direction": "B",
-    "interval_to_next": 1
+    "interval_to_next": 2
   },
   "bus_86_56666": {
     "transport_type": "bus",
@@ -27565,7 +27565,7 @@
     "stop_id": "56682",
     "stop_name": "Никифорова",
     "direction": "B",
-    "interval_to_next": 2
+    "interval_to_next": 1
   },
   "bus_86_56748": {
     "transport_type": "bus",
@@ -27573,7 +27573,7 @@
     "stop_id": "56748",
     "stop_name": "Школа №45",
     "direction": "B",
-    "interval_to_next": 1
+    "interval_to_next": 2
   },
   "bus_86_56618": {
     "transport_type": "bus",
@@ -27581,7 +27581,7 @@
     "stop_id": "56618",
     "stop_name": "Универсам ''Первомайский''",
     "direction": "B",
-    "interval_to_next": 2
+    "interval_to_next": 1
   },
   "bus_86_56678": {
     "transport_type": "bus",
@@ -27605,7 +27605,7 @@
     "stop_id": "56617",
     "stop_name": "Острошицкая",
     "direction": "B",
-    "interval_to_next": 1
+    "interval_to_next": 2
   },
   "bus_86_56743": {
     "transport_type": "bus",
@@ -27613,7 +27613,7 @@
     "stop_id": "56743",
     "stop_name": "Городецкая",
     "direction": "B",
-    "interval_to_next": 2
+    "interval_to_next": 1
   },
   "bus_86_56635": {
     "transport_type": "bus",
@@ -27621,7 +27621,7 @@
     "stop_id": "56635",
     "stop_name": "ДС ''Уручье-4''",
     "direction": "B",
-    "interval_to_next": 1
+    "interval_to_next": 2
   },
   "bus_86_940984": {
     "transport_type": "bus",
@@ -27629,7 +27629,7 @@
     "stop_id": "940984",
     "stop_name": "Лопатина,7",
     "direction": "B",
-    "interval_to_next": 2
+    "interval_to_next": 1
   },
   "bus_86_940877": {
     "transport_type": "bus",
@@ -27637,7 +27637,7 @@
     "stop_id": "940877",
     "stop_name": "Лопатина,4",
     "direction": "B",
-    "interval_to_next": 1
+    "interval_to_next": 2
   },
   "bus_86_2226222": {
     "transport_type": "bus",
@@ -27645,7 +27645,7 @@
     "stop_id": "2226222",
     "stop_name": "Подгорная",
     "direction": "B",
-    "interval_to_next": 2
+    "interval_to_next": 1
   },
   "bus_86_2224096": {
     "transport_type": "bus",
@@ -27653,7 +27653,7 @@
     "stop_id": "2224096",
     "stop_name": "Копище",
     "direction": "B",
-    "interval_to_next": 1
+    "interval_to_next": null
   },
   "bus_87с_9565": {
     "transport_type": "bus",
