@@ -31,7 +31,7 @@ class ScheduleCalculator:
         elif 8 <= hour <= 9:
             corrected_minute += 2  # Добавляем 2 минуты
         elif 18 <= hour <= 19:
-            corrected_minute += 3  # Добавляем 3 минуты
+            corrected_minute += 5  # Добавляем 3 минуты
         
         # Обрабатываем перенос часов при переходе через 60 минут или 0 минут
         if corrected_minute >= 60:
