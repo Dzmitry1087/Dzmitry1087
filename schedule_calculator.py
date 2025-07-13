@@ -13,7 +13,7 @@ class ScheduleCalculator:
         """Загружает настройки коэффициентов отклонения"""
         try:
             settings_url = "https://raw.githubusercontent.com/Dzmitry1087/Dzmitry1087/refs/heads/main/schedule_calculator_settings.json"
-            response = requests.get(settings_url)
+            response = requests.get(settings_url, timeout=5)  # Добавлен таймаут
             if response.status_code == 200:
                 settings = response.json()
                 # Загружаем коэффициенты для будней
@@ -24,6 +24,9 @@ class ScheduleCalculator:
                     self.weekend_error_coeffs[int(hour_str)] = float(coeff)
         except Exception as e:
             print(f"Ошибка загрузки настроек: {e}")
+            # Используем коэффициенты по умолчанию, если загрузка не удалась
+            self.weekday_error_coeffs = {h: 0.0 for h in range(24)}
+            self.weekend_error_coeffs = {h: 0.0 for h in range(24)}
 
     def update_settings(self, weekday_coeffs, weekend_coeffs):
         """Обновляет коэффициенты отклонения"""
@@ -32,6 +35,9 @@ class ScheduleCalculator:
 
     def calculate_time_with_carryover(self, hour, minute, time_diff, is_weekend=False):
         """Рассчитывает время с переносом минут, коррекцией на 6 минут и учетом коэффициентов отклонения"""
+        if time_diff == 0:
+            return hour, minute  # Нет изменений, если интервал нулевой
+
         # Получаем коэффициент для текущего часа
         coeff = self.weekend_error_coeffs[hour] if is_weekend else self.weekday_error_coeffs[hour]
         
