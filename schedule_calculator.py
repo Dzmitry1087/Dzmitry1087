@@ -21,7 +21,7 @@ class ScheduleCalculator:
             print(f"Ошибка загрузки настроек: {e}")
 
     def calculate_time_with_carryover(self, hour, minute, time_diff):
-        """Рассчитывает время с переносом минут без коррекции"""
+        """Рассчитывает время с переносом минут"""
         new_minute = minute + time_diff
         
         if new_minute >= 60:
@@ -39,7 +39,7 @@ class ScheduleCalculator:
         return hour, new_minute
     
     def calculate_schedule_for_stop(self, tab, new_stop_id, transport_cache):
-        """Расчет расписания без учета погрешностей"""
+        """Расчет расписания с учетом интервалов между остановками"""
         if not tab.original_schedule["weekdays"] or not tab.original_schedule["weekends"]:
             return False
         
@@ -75,6 +75,7 @@ class ScheduleCalculator:
         if current_index is None or new_index is None:
             return False
         
+        # Рассчитываем общий интервал между остановками
         time_diff = 0
         step = 1 if new_index > current_index else -1
         
@@ -83,9 +84,9 @@ class ScheduleCalculator:
             interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
             time_diff += interval * step
         
-        # Расчет без коррекции погрешности
-        new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff, {})
-        new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff, {})
+        # Рассчитываем новое расписание на основе оригинального (загруженного из интернета)
+        new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff)
+        new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff)
         
         self.update_schedule_in_ui(tab, new_weekdays, new_weekends)
         
@@ -96,8 +97,8 @@ class ScheduleCalculator:
         
         return True
     
-    def calculate_new_schedule(self, schedule, time_diff, error_coeffs):
-        """Чистый расчет без коэффициентов"""
+    def calculate_new_schedule(self, schedule, time_diff):
+        """Чистый расчет без коэффициентов на основе оригинального расписания"""
         new_schedule = defaultdict(list)
         
         for hour, minutes_str in schedule.items():
@@ -108,7 +109,7 @@ class ScheduleCalculator:
                 try:
                     m = int(minute)
                     # Прямое использование time_diff без корректировок
-                    new_hour, new_min = self.calculate_time_with_carryover(hour, m, time_diff)
+                    new_hour, new_min = self.calculate_time_with_carryover(int(hour), m, time_diff)
                     new_schedule[new_hour].append(f"{new_min:02d}")
                 except ValueError:
                     continue
