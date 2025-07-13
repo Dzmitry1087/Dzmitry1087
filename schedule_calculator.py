@@ -21,28 +21,25 @@ class ScheduleCalculator:
             print(f"Ошибка загрузки настроек: {e}")
 
     def calculate_time_with_carryover(self, hour, minute, time_diff):
-        """Рассчитывает время с переносом минут и коррекцией на 6 минут"""
-        # Применяем коррекцию - вычитаем 6 минут
-        corrected_minute = minute + time_diff - 6
+        """Рассчитывает время с переносом минут"""
+        new_minute = minute + time_diff
         
-        # Обрабатываем перенос часов при переходе через 60 минут или 0 минут
-        if corrected_minute >= 60:
+        if new_minute >= 60:
             hour += 1
-            corrected_minute -= 60
-        elif corrected_minute < 0:
+            new_minute -= 60
+        elif new_minute < 0:
             hour -= 1
-            corrected_minute += 60
+            new_minute += 60
         
-        # Обрабатываем перенос через полночь
         if hour >= 24:
             hour -= 24
         elif hour < 0:
             hour += 24
         
-        return hour, corrected_minute
+        return hour, new_minute
     
     def calculate_schedule_for_stop(self, tab, new_stop_id, transport_cache):
-        """Расчет расписания с учетом интервалов между остановками и коррекцией на 6 минут"""
+        """Расчет расписания с учетом интервалов между остановками"""
         if not tab.original_schedule["weekdays"] or not tab.original_schedule["weekends"]:
             return False
         
@@ -87,7 +84,7 @@ class ScheduleCalculator:
             interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
             time_diff += interval * step
         
-        # Рассчитываем новое расписание на основе оригинального с коррекцией на 6 минут
+        # Рассчитываем новое расписание на основе оригинального (загруженного из интернета)
         new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff)
         new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff)
         
@@ -101,7 +98,7 @@ class ScheduleCalculator:
         return True
     
     def calculate_new_schedule(self, schedule, time_diff):
-        """Расчет с коррекцией на 6 минут"""
+        """Чистый расчет без коэффициентов на основе оригинального расписания"""
         new_schedule = defaultdict(list)
         
         for hour, minutes_str in schedule.items():
@@ -111,7 +108,7 @@ class ScheduleCalculator:
             for minute in minutes_str.split():
                 try:
                     m = int(minute)
-                    # Применяем time_diff и коррекцию на 6 минут
+                    # Прямое использование time_diff без корректировок
                     new_hour, new_min = self.calculate_time_with_carryover(int(hour), m, time_diff)
                     new_schedule[new_hour].append(f"{new_min:02d}")
                 except ValueError:
