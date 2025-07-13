@@ -30,7 +30,7 @@ class ScheduleCalculator:
             corrected_minute += 1  # Добавляем 1 минуту
         elif 8 <= hour <= 9:
             corrected_minute += 2  # Добавляем 2 минуты
-        elif 10 <= hour <= 17:
+        elif 10 <= hour <= 18:
             corrected_minute += 1  # Добавляем 1 минуту
         elif 18 <= hour <= 19:
             corrected_minute += 3  # Добавляем 3 минуты
