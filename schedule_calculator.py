@@ -26,12 +26,16 @@ class ScheduleCalculator:
         corrected_minute = minute + time_diff - 6
         
         # Добавляем дополнительные минуты в зависимости от часа
-        if hour == 7 or (10 <= hour <= 17) or (20 <= hour <= 21):
+        if hour == 7:
             corrected_minute += 1  # Добавляем 1 минуту
         elif 8 <= hour <= 9:
             corrected_minute += 2  # Добавляем 2 минуты
+        elif 10 <= hour <= 17:
+            corrected_minute += 1  # Добавляем 1 минуту
         elif 18 <= hour <= 19:
-            corrected_minute += 5  # Добавляем 3 минуты
+            corrected_minute += 3  # Добавляем 3 минуты
+        elif 20 <= hour <= 21:
+            corrected_minute += 1  # Добавляем 1 минуту
         
         # Обрабатываем перенос часов при переходе через 60 минут или 0 минут
         if corrected_minute >= 60:
