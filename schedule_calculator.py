@@ -10,41 +10,22 @@ class ScheduleCalculator:
         self.load_settings()
     
     def load_settings(self):
-        """Загружает настройки коэффициентов отклонения"""
+        """Загружает настройки (коэффициенты остаются нулевыми)"""
         try:
             settings_url = "https://raw.githubusercontent.com/Dzmitry1087/Dzmitry1087/refs/heads/main/schedule_calculator_settings.json"
-            response = requests.get(settings_url, timeout=5)  # Добавлен таймаут
+            response = requests.get(settings_url)
             if response.status_code == 200:
                 settings = response.json()
-                # Загружаем коэффициенты для будней
-                for hour_str, coeff in settings["weekday_error_coeffs"].items():
-                    self.weekday_error_coeffs[int(hour_str)] = float(coeff)
-                # Загружаем коэффициенты для выходных
-                for hour_str, coeff in settings["weekend_error_coeffs"].items():
-                    self.weekend_error_coeffs[int(hour_str)] = float(coeff)
+                # Коэффициенты не применяются, но файл читается для совместимости
         except Exception as e:
             print(f"Ошибка загрузки настроек: {e}")
-            # Используем коэффициенты по умолчанию, если загрузка не удалась
-            self.weekday_error_coeffs = {h: 0.0 for h in range(24)}
-            self.weekend_error_coeffs = {h: 0.0 for h in range(24)}
 
-    def update_settings(self, weekday_coeffs, weekend_coeffs):
-        """Обновляет коэффициенты отклонения"""
-        self.weekday_error_coeffs = weekday_coeffs
-        self.weekend_error_coeffs = weekend_coeffs
-
-    def calculate_time_with_carryover(self, hour, minute, time_diff, is_weekend=False):
-        """Рассчитывает время с переносом минут, коррекцией на 6 минут и учетом коэффициентов отклонения"""
-        if time_diff == 0:
-            return hour, minute  # Нет изменений, если интервал нулевой
-
-        # Получаем коэффициент для текущего часа
-        coeff = self.weekend_error_coeffs[hour] if is_weekend else self.weekday_error_coeffs[hour]
+    def calculate_time_with_carryover(self, hour, minute, time_diff):
+        """Рассчитывает время с переносом минут и коррекцией на 6 минут"""
+        # Применяем коррекцию - вычитаем 6 минут
+        corrected_minute = minute + time_diff - 6
         
-        # Применяем коррекцию - вычитаем 6 минут и добавляем отклонение
-        corrected_minute = minute + time_diff - 6 + round(coeff * time_diff)
-        
-        # Обрабатываем перенос часов
+        # Обрабатываем перенос часов при переходе через 60 минут или 0 минут
         if corrected_minute >= 60:
             hour += 1
             corrected_minute -= 60
@@ -61,7 +42,7 @@ class ScheduleCalculator:
         return hour, corrected_minute
     
     def calculate_schedule_for_stop(self, tab, new_stop_id, transport_cache):
-        """Расчет расписания с учетом интервалов, коррекции и коэффициентов"""
+        """Расчет расписания с учетом интервалов между остановками и коррекцией на 6 минут"""
         if not tab.original_schedule["weekdays"] or not tab.original_schedule["weekends"]:
             return False
         
@@ -106,9 +87,9 @@ class ScheduleCalculator:
             interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
             time_diff += interval * step
         
-        # Рассчитываем расписание с учетом коэффициентов
-        new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff, False)
-        new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff, True)
+        # Рассчитываем новое расписание на основе оригинального с коррекцией на 6 минут
+        new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff)
+        new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff)
         
         self.update_schedule_in_ui(tab, new_weekdays, new_weekends)
         
@@ -119,8 +100,8 @@ class ScheduleCalculator:
         
         return True
     
-    def calculate_new_schedule(self, schedule, time_diff, is_weekend):
-        """Расчет с коррекцией и коэффициентами отклонения"""
+    def calculate_new_schedule(self, schedule, time_diff):
+        """Расчет с коррекцией на 6 минут"""
         new_schedule = defaultdict(list)
         
         for hour, minutes_str in schedule.items():
@@ -130,8 +111,8 @@ class ScheduleCalculator:
             for minute in minutes_str.split():
                 try:
                     m = int(minute)
-                    new_hour, new_min = self.calculate_time_with_carryover(
-                        int(hour), m, time_diff, is_weekend)
+                    # Применяем time_diff и коррекцию на 6 минут
+                    new_hour, new_min = self.calculate_time_with_carryover(int(hour), m, time_diff)
                     new_schedule[new_hour].append(f"{new_min:02d}")
                 except ValueError:
                     continue
@@ -143,7 +124,7 @@ class ScheduleCalculator:
         return result
     
     def update_schedule_in_ui(self, tab, weekdays, weekends):
-        """Обновление интерфейса"""
+        """Обновление интерфейса (без изменений)"""
         for hour in range(5, 24):
             idx = hour - 5
             if hour in weekdays:
@@ -167,7 +148,7 @@ class ScheduleCalculator:
             tab.weekends[19].insert(0, weekends[0])
     
     def get_interval_for_stop(self, transport_type, transport_number, stop_id, transport_cache):
-        """Получение интервала между остановками"""
+        """Получение интервала между остановками (без изменений)"""
         try:
             route_key = f"{transport_type}_{transport_number}"
             route_data = transport_cache.get(route_key)
