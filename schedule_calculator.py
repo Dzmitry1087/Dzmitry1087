@@ -16,14 +16,12 @@ class ScheduleCalculator:
             response = requests.get(settings_url)
             if response.status_code == 200:
                 settings = response.json()
-                # Применяем коэффициенты из файла настроек
                 for hour_str, coeff in settings.get("weekday_error_coeffs", {}).items():
                     self.weekday_error_coeffs[int(hour_str)] = float(coeff)
                 
                 for hour_str, coeff in settings.get("weekend_error_coeffs", {}).items():
                     self.weekend_error_coeffs[int(hour_str)] = float(coeff)
             else:
-                # Используем коэффициенты по умолчанию если файл не загружен
                 self.set_default_coeffs()
         except Exception as e:
             print(f"Ошибка загрузки настроек: {e}")
@@ -31,7 +29,6 @@ class ScheduleCalculator:
 
     def set_default_coeffs(self):
         """Устанавливает коэффициенты по умолчанию"""
-        # Будние дни
         self.weekday_error_coeffs = {
             5: -1.5, 6: -1.0, 7: -0.5, 8: 0.5, 9: 1.0,
             10: 1.5, 11: 1.0, 12: 0.5, 13: 0.0, 14: -0.5,
@@ -39,7 +36,6 @@ class ScheduleCalculator:
             20: 1.5, 21: 1.0, 22: 0.5, 23: 0.0, 0: -1.0
         }
         
-        # Выходные дни
         self.weekend_error_coeffs = {
             5: -2.0, 6: -1.5, 7: -1.0, 8: -0.5, 9: 0.0,
             10: 0.5, 11: 1.0, 12: 1.5, 13: 1.0, 14: 0.5,
@@ -49,16 +45,11 @@ class ScheduleCalculator:
 
     def calculate_time_with_carryover(self, hour, minute, time_diff, is_weekend=False):
         """Рассчитывает время с учетом коэффициентов погрешности"""
-        # Получаем коэффициент погрешности для данного часа
         error_coeff = self.weekend_error_coeffs[hour] if is_weekend else self.weekday_error_coeffs[hour]
         
-        # Применяем базовую коррекцию - вычитаем 6 минут
         corrected_minute = minute + time_diff - 6
-        
-        # Применяем коэффициент погрешности
         corrected_minute += error_coeff
         
-        # Обрабатываем перенос часов при переходе через 60 минут или 0 минут
         if corrected_minute >= 60:
             hour += 1
             corrected_minute -= 60
@@ -66,7 +57,6 @@ class ScheduleCalculator:
             hour -= 1
             corrected_minute += 60
         
-        # Обрабатываем перенос через полночь
         if hour >= 24:
             hour -= 24
         elif hour < 0:
@@ -75,12 +65,15 @@ class ScheduleCalculator:
         return hour, max(0, min(59, int(round(corrected_minute))))
 
     def calculate_schedule_for_stop(self, tab, new_stop_id, transport_cache):
-        """Расчет расписания с учетом интервалов между остановками и коэффициентов погрешности"""
+        """Расчет расписания с учетом интервалов между остановками"""
         if not tab.original_schedule["weekdays"] or not tab.original_schedule["weekends"]:
             return False
         
-        # Проверяем совпадение направления с эталонным
-        if tab.reference_direction and tab.current_direction != tab.reference_direction:
+        # Проверяем наличие reference_direction и его совпадение
+        reference_direction = getattr(tab, 'reference_direction', None)
+        current_direction = getattr(tab, 'current_direction', None)
+        
+        if reference_direction and current_direction != reference_direction:
             return False
         
         transport_number = tab.number_var.get()
@@ -115,7 +108,6 @@ class ScheduleCalculator:
         if current_index is None or new_index is None:
             return False
         
-        # Рассчитываем общий интервал между остановками
         time_diff = 0
         step = 1 if new_index > current_index else -1
         
@@ -124,7 +116,6 @@ class ScheduleCalculator:
             interval = self.get_interval_for_stop(transport_type, transport_number, stop_id, transport_cache)
             time_diff += interval * step
         
-        # Рассчитываем новое расписание на основе оригинального с коэффициентами
         new_weekdays = self.calculate_new_schedule(tab.original_schedule["weekdays"], time_diff, is_weekend=False)
         new_weekends = self.calculate_new_schedule(tab.original_schedule["weekends"], time_diff, is_weekend=True)
         
